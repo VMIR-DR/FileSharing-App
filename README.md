@@ -75,9 +75,6 @@ Follow these steps to set up the project locally:
 3. **Upload Files**: Use the upload form to add files – they'll be stored securely.
 4. **View & Download**: Browse the file list, see who uploaded what, and download as needed.
 
-Example Workflow Screenshot:  
-![App Workflow](https://via.placeholder.com/800x400?text=Upload+→+List+→+Download)
-
 ## Contributing 🤝
 We love contributions! Here's how to get involved:
 1. Fork the repository.
