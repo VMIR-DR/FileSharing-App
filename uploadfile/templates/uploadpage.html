@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Upload{% endblock %}
+{% block content %}
+<header>
+    <h1>📤 آپلود فایل</h1>
+    <nav>
+        <a href="{% url 'uploadfile:home' %}">🏠</a>
+    </nav>
+</header>
+
+
+<div class="form-container">
+	<section class="card card-upload">
+		<div class="form-header">
+			<h2>فایل جدید را انتخاب کنید و آپلود کنید</h2>
+		</div>
+		<form id="uploadForm" enctype="multipart/form-data">
+			{% csrf_token %}
+			<div class="form-group">
+				<label for="fileInput">انتخاب فایل</label>
+				<input type="file" name="file" id="fileInput" required>
+			</div>
+			<div class="form-group">
+				<label for="titleInput">عنوان (اختیاری)</label>
+				<input type="text" name="title" id="titleInput" placeholder="عنوان نمایش برای صفحه دانلود">
+			</div>
+			<button type="submit" class="btn-submit">آپلود کنید</button>
+			<div id="msg" class="message-box"></div>
+		</form>
+	</section>
+</div>
+	<script>
+	(function () {
+		function getCookie(name) {
+			let cookieValue = null;
+			if (document.cookie && document.cookie !== '') {
+				const cookies = document.cookie.split(';');
+				for (let i = 0; i < cookies.length; i++) {
+					const cookie = cookies[i].trim();
+					if (cookie.indexOf(name + '=') === 0) {
+						cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+						break;
+					}
+				}
+			}
+			return cookieValue;
+		}
+
+		const form = document.getElementById('uploadForm');
+		const fileInput = document.getElementById('fileInput');
+		const titleInput = document.getElementById('titleInput');
+		const msg = document.getElementById('msg');
+		const submitBtn = form.querySelector('button[type="submit"]');
+
+		async function handleUpload(e) {
+			e.preventDefault();
+
+			if (!fileInput.files || !fileInput.files[0]) {
+				msg.style.color = '#e74c3c';
+				msg.textContent = '❌ لطفا فایل را انتخاب کنید';
+				return;
+			}
+
+			submitBtn.disabled = true;
+			submitBtn.textContent = 'در حال آپلود...';
+			msg.style.color = '#3498db';
+			msg.textContent = '⏳ در حال آپلود...';
+
+			const formData = new FormData(form);
+
+			try {
+				const response = await fetch('{% url "uploadfile:save_file" %}', {
+					method: 'POST',
+					headers: { 'X-CSRFToken': getCookie('csrftoken') },
+					body: formData
+				});
+
+				if (!response.ok) throw new Error('HTTP ' + response.status);
+				const data = await response.json();
+
+				if (data.ok) {
+					msg.style.color = '#27ae60';
+					msg.textContent = '✅ آپلود تکمیل شد! فایل شما ذخیره شد.';
+					form.reset();
+				} else {
+					msg.style.color = '#e74c3c';
+					msg.textContent = '❌ خطا: ' + (data.error || 'آپلود ناموفق');
+				}
+			} catch (err) {
+				msg.style.color = '#e74c3c';
+				msg.textContent = '❌ خطا: ' + err.message;
+				console.error('Upload error:', err);
+			} finally {
+				submitBtn.disabled = false;
+				submitBtn.textContent = 'آپلود کنید';
+			}
+		}
+
+		form.addEventListener('submit', handleUpload);
+	})();
+	</script>
+{% endblock %}

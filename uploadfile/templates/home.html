@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}صفحه اصلی{% endblock %}
+{% block content %}
+<header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; margin-top: 0px; padding: 0px 0;">
+    <h1 style="margin: 0; font-size: 1.8em;">سلام {{ user.username }}! 👋</h1>
+    <a href="{% url 'uploadfile:logout' %}" style="background: #ef4444; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 600;">خروج</a>
+</header>
+
+<div class="home-container">
+    <section class="hero">
+        <h1 class="app-title">مدیریت فایل‌ها</h1>
+        <p class="app-subtitle">فایل‌های خود را آپلود کنید و با دیگران به اشتراک بگذارید</p>
+    </section>
+
+    <div class="cards-grid">
+        <a href="{% url 'uploadfile:upload_page' %}" class="card-link">
+            <div class="card-box upload-card">
+                <div class="card-icon">📤</div>
+                <h2>آپلود فایل</h2>
+                <p>فایل جدید را برای یکی از کاربران آپلود کنید</p>
+                <div class="card-arrow">→</div>
+            </div>
+        </a>
+
+        <a href="{% url 'uploadfile:download_page' %}" class="card-link">
+            <div class="card-box download-card">
+                <div class="card-icon">📥</div>
+                <h2>دانلود فایل</h2>
+                <p>فایل‌های دریافتی و آپلود شده خود را مشاهده کنید</p>
+                <div class="card-arrow">→</div>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}

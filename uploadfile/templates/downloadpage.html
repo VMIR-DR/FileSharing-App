@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% block title %}دانلود فایل{% endblock %}
+
+{% block content %}
+<header>
+    <h1>📥 دانلود فایل</h1>
+    <nav>
+        <a href="{% url 'uploadfile:upload_page' %}">📤 |</a>
+        <a href="{% url 'uploadfile:home' %}">🏠 |</a>
+        <a href="{% url 'uploadfile:logout' %}">🚪 |</a>
+    </nav>
+</header>
+
+<div class="form-container">
+    <section class="card card-download">
+        <div class="form-header">
+            <h2>فایل‌های شما</h2>
+        </div>
+        <div id="list" class="files-list">در حال بارگذاری...</div>
+    </section>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const list = document.getElementById('list');
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.indexOf(name + '=') === 0) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    async function fetchFiles() {
+        list.textContent = 'در حال بارگذاری...';
+        try {
+            const res = await fetch('{% url "uploadfile:show_lines" %}');
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            renderList(data.files || []);
+        } catch (err) {
+            list.innerHTML = '<p style="color:#e74c3c">خطا در بارگذاری: ' + err.message + '</p>';
+            console.error('Load list error:', err);
+        }
+    }
+
+    function renderList(files) {
+        list.innerHTML = '';
+        if (!files.length) {
+            list.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">فایلی برای نمایش وجود ندارد.</p>';
+            return;
+        }
+
+        files.forEach(function (f) {
+            const row = document.createElement('div');
+            row.className = 'row';
+            row.dataset.id = f.id;
+
+            const infoDiv = document.createElement('div');
+            infoDiv.style.flex = '1';
+
+            const title = document.createElement('div');
+            title.className = 'title';
+            title.textContent = f.title || f.file_name;
+
+            const senderDiv = document.createElement('div');
+            senderDiv.style.fontSize = '0.85em';
+            senderDiv.style.color = '#666';
+            senderDiv.style.marginTop = '5px';
+            senderDiv.innerHTML = '' + f.sender;
+
+            infoDiv.appendChild(title);
+            infoDiv.appendChild(senderDiv);
+
+            const actions = document.createElement('div');
+            actions.className = 'actions';
+
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'download';
+            downloadBtn.textContent = 'دانلود';
+            downloadBtn.addEventListener('click', function () {
+                const a = document.createElement('a');
+                a.href = f.url;
+                a.download = '';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            });
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'del';
+            delBtn.textContent = 'حذف';
+            delBtn.addEventListener('click', async function () {
+                if (!confirm('آیا واقعاً می‌خواهید این فایل را حذف کنید؟')) return;
+                
+                delBtn.disabled = true;
+                delBtn.textContent = 'در حال حذف...';
+                
+                try {
+                    const csrftoken = getCookie('csrftoken');
+                    
+                    // بعد از download page - URL نسبی
+                    const deleteUrl = `{% url 'uploadfile:delete_file' 0 %}`.replace('0', f.id);
+                    
+                    const response = await fetch(deleteUrl, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrftoken,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok && data.ok) {
+                        // موفق - لیست را تازه کنید
+                        fetchFiles();
+                    } else {
+                        alert('خطا: ' + (data.error || 'حذف ناموفق'));
+                        delBtn.disabled = false;
+                        delBtn.textContent = 'حذف';
+                    }
+                } catch (err) {
+                    alert('خطا در برقراری ارتباط: ' + err.message);
+                    console.error(err);
+                    delBtn.disabled = false;
+                    delBtn.textContent = 'حذف';
+                }
+            });
+
+            actions.appendChild(downloadBtn);
+            actions.appendChild(delBtn);
+
+            row.appendChild(infoDiv);
+            row.appendChild(actions);
+            list.appendChild(row);
+        });
+    }
+
+    fetchFiles();
+});
+</script>
+{% endblock %}
